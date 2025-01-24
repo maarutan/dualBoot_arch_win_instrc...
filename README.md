@@ -2,8 +2,8 @@
 
 ## instruction
 
-[Russian instruction](./RU.md
+[Russian instruction](./RU.md)
 or txt variant [click here](./RU.txt)
 
-[English instruction](./EN.md
+[English instruction](./EN.md)
 or txt variant [click here](./EN.txt)
