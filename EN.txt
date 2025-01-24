@@ -1,0 +1,199 @@
+---
+
+**Arch Linux Installation:**
+
+1. **Preparing the Disk:**
+   - Open "Disk Management" (Windows):
+     - Use the `diskmgmt` utility for disk labels.
+     - Example: disk0 TOM: (C:/)
+
+2. **Download Arch Linux ISO:**
+   - Go to https://archlinux.org
+
+3. **Create a Bootable USB Drive:**
+   - Use Ventoy or Rufus (if using Windows) to create a bootable USB drive.
+
+4. **Boot from BIOS:**
+   - Boot Arch Linux from your USB drive.
+
+---
+
+**Arch Linux Installation:**
+
+1. **Set Large Fonts for ISO:**
+   - `setfont ter-132n`
+
+2. **Connect to Wi-Fi (if using iwd):**
+   - List devices:
+     `device list`
+   - Search for networks:
+     `station wlan0 get-networks`
+   - Connect to Wi-Fi:
+     `station wlan0 connect <your_wifi>`
+     - Enter the Wi-Fi password when prompted:
+       Passphrase: <your_password>
+
+3. **Check Network Connection:**
+   - `ping google.com`
+
+4. **Check Disk Labels:**
+   - `lsblk`
+
+   Example:
+   labelRoot
+     |_ label1    size
+     |_ label2    size
+     |_ label3    size
+
+5. **Partition the Disk with cfdisk:**
+   - Use `cfdisk` to partition the disk:
+     `cfdisk /dev/labelRoot`
+
+6. **Create Partitions in cfdisk:**
+   - EFI Partition (1 GB)
+   - Swap Partition (4 GB or more)
+   - Linux Partition (default)
+
+7. **Format Partitions:**
+   - Format EFI partition:
+     `mkfs.fat -F32 /dev/label-efi`
+   - Format Linux partition:
+     `mkfs.ext4 /dev/label-linuxFileSystem`
+   - Create swap partition:
+     `mkswap /dev/label-swap`
+
+8. **Mount Partitions:**
+   - `mount /dev/label-linux-FileSystem /mnt`
+   - `mount --mkdir /dev/label-efi /mnt/boot`
+   - `swapon /dev/label-swap`
+
+9. **Install Arch Using pacstrap:**
+   - `pacstrap -i /mnt base base-devel linux linux-firmware git sudo neofetch htop xf86-video-amdgpu mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon amd-ucode opencl-mesa radeontop tlp tlp-rdw nvim vim nano networkmanager`
+
+10. **Generate fstab:**
+    - `genfstab -U /mnt >> /mnt/etc/fstab`
+
+    Check the fstab file to ensure it's correct.
+
+11. **Chroot into Arch:**
+    - `arch-chroot /mnt`
+
+12. **Check System Information with neofetch:**
+    - `neofetch`
+
+13. **Set Root Password:**
+    - `passwd`
+
+14. **Add New User:**
+    - `useradd -m -g users -G wheel,storage,power,video,audio -s /bin/bash <username>`
+    
+    Example:
+    `useradd -m -g users -G wheel,storage,power,video,audio -s /bin/bash maaru`
+
+15. **Set Password for New User:**
+    - `passwd <username>`
+    
+    Example:
+    `passwd maaru`
+
+16. **Grant sudo Rights to User:**
+    - `EDITOR=nvim visudo`
+    
+    Uncomment this line:
+    `%wheel ALL=(ALL:ALL) ALL`
+
+    Check sudo rights:
+    `su - <username>`
+
+17. **Set Timezone:**
+    - `ln -sf /usr/share/zoneinfo/<Region>/<City> /etc/localtime`
+    - `hwclock --systohc`
+    
+    Example:
+    `ln -sf /usr/share/zoneinfo/Asia/Bishkek /etc/localtime`
+    `hwclock --systohc`
+
+18. **Set Locale (Language and Keyboard Layout):**
+    - Edit the `/etc/locale.gen` file to enable the needed locales.
+      Example:
+      `ru_RU.UTF-8 UTF-8`
+      `en_US.UTF-8 UTF-8`
+    
+    - Generate locales:
+      `locale-gen`
+
+19. **Set Default Locale:**
+    - Edit the `/etc/locale.conf` file:
+      `LANG=en_US.UTF-8`
+
+20. **Set Hostname:**
+    - Edit the `/etc/hostname` file:
+      `Anjel`
+
+21. **Set Hosts File:**
+    - Edit the `/etc/hosts` file:
+      ```
+      127.0.0.1    localhost
+      ::1          localhost
+      127.0.1.1    Anjel.localdomain    Anjel
+      ```
+
+22. **Install and Configure GRUB Bootloader:**
+    - `pacman -Syu grub efibootmgr dosfstools mtools`
+    - `grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB`
+    - `grub-mkconfig -o /boot/grub/grub.cfg`
+
+23. **Enable NetworkManager:**
+    - `systemctl enable NetworkManager`
+
+24. **Unmount and Exit chroot:**
+    - `exit`
+    - `umount -lR /mnt`
+
+25. **Reboot the System:**
+    - `reboot`
+
+---
+
+**Adding Windows to the GRUB Menu:**
+
+1. **Install os-prober:**
+   - `sudo pacman -Sy os-prober`
+
+2. **Edit GRUB Configuration:**
+   - `sudo nvim /etc/default/grub`
+   
+   Set:
+   `GRUB_TIMEOUT=20`
+   
+   Uncomment:
+   `GRUB_DISABLE_OS_PROBER=false`
+
+3. **Recompile GRUB:**
+   - `grub-mkconfig -o /boot/grub/grub.cfg`
+
+---
+
+**If os-prober Doesn't Detect Windows:**
+
+1. **Find the BIOS Partition:**
+   - `sudo fdisk -l`
+
+2. **Get UUID of the BIOS Partition:**
+   - `sudo blkid /dev/sda1`
+
+3. **Edit GRUB File:**
+   - `sudo nano /etc/grub.d/40_custom`
+
+4. **Code for Windows Menu Entry:**
+   ```
+   menuentry "Windows" --class windows --class os {
+       search --fs-uuid --no-floppy --set=root UUID_Here
+       chainloader (${root})/EFI/Microsoft/Boot/bootmgfw.efi
+   }
+   ```
+
+5. **Update GRUB:**
+   - `sudo update-grub`
+
+If the OS is not found, it may be necessary to update the GRUB configuration after making changes.
